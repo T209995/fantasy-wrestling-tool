@@ -1,6 +1,6 @@
 # Outil de Fantasy Booking
+# UPDATE: English version is done! (English version of README.md is coming soon)
 # DISCLAIMER : Le script a été crée partiellement avec l'aide de Google Gemini 2.5 Flash
-# English version coming soon!
 
 Cet outil est une application web conçue pour les fans de catch qui aiment créer et gérer leurs propres scénarios. Il vous permet de garder une trace des matchs, de gérer un roster, d'organiser des tournois et de gérer les titres de championnat.
 
