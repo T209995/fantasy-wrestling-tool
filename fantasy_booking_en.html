@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fantasy Booking Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .animate-bounce-in {
+            animation: bounceIn 0.8s;
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.1); opacity: 1; }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); }
+        }
+        .wrestler-choice:hover {
+            background-color: #e2e8f0;
+            cursor: pointer;
+        }
+        .wrestler-choice.winner {
+            background-color: #d1fae5;
+            border-color: #34d399;
+            font-weight: bold;
+        }
+        .wrestler-choice.loser {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+        .bracket-match {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .bracket-connector {
+            width: 2px;
+            background-color: #9ca3af;
+        }
+        .bracket-horizontal {
+            height: 2px;
+            background-color: #9ca3af;
+        }
+        .tab-button.active {
+            background-color: #fff;
+            border-bottom: 2px solid #3b82f6;
+            color: #3b82f6;
+        }
+        .tab-button:not(.active) {
+            background-color: #e5e7eb;
+            color: #4b5563;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-lg">
+        <h1 class="text-4xl font-bold text-center mb-6 text-gray-800">Fantasy Booking Tool</h1>
+        
+        <!-- Tab Navigation -->
+        <div class="flex border-b border-gray-200 mb-6">
+            <button id="tab-accueil" class="tab-button flex-1 py-2 px-4 text-center text-sm font-medium rounded-t-lg transition-colors duration-200 active">Home</button>
+            <button id="tab-roster" class="tab-button flex-1 py-2 px-4 text-center text-sm font-medium rounded-t-lg transition-colors duration-200">Roster</button>
+            <button id="tab-matches" class="tab-button flex-1 py-2 px-4 text-center text-sm font-medium rounded-t-lg transition-colors duration-200">Matchs</button>
+            <button id="tab-tournoi" class="tab-button flex-1 py-2 px-4 text-center text-sm font-medium rounded-t-lg transition-colors duration-200">Tournament</button>
+            <button id="tab-titres" class="tab-button flex-1 py-2 px-4 text-center text-sm font-medium rounded-t-lg transition-colors duration-200">Titles</button>
+            <button id="tab-classement" class="tab-button flex-1 py-2 px-4 text-center text-sm font-medium rounded-t-lg transition-colors duration-200">Ranking</button>
+            <button id="tab-outils" class="tab-button flex-1 py-2 px-4 text-center text-sm font-medium rounded-t-lg transition-colors duration-200">Tools</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="tab-content-accueil" class="tab-content">
+            <p class="text-center text-gray-600 mb-8">
+                Manage your roster, add new wrestlers, track match history, ratings, and match statistics.
+            </p>
+            <div class="bg-gray-50 p-6 rounded-lg mb-8 shadow-sm">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Objectives list</h2>
+                <ul id="objectives-list" class="space-y-4">
+                </ul>
+            </div>
+        </div>
+
+        <div id="tab-content-roster" class="tab-content hidden">
+            <div class="bg-gray-50 p-6 rounded-lg mb-8 shadow-sm">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Add a new wrestler</h2>
+                <div class="space-y-4">
+                    <input type="text" id="wrestler-name" placeholder="Wrestler Name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="text" id="wrestler-division" placeholder="Division (ex: Heavyweight)" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <textarea id="wrestler-notes" placeholder="Notes (ex: John Cena's rival)" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    <button id="add-wrestler-btn" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-300">
+                        Add wrestler
+                    </button>
+                </div>
+            </div>
+
+            <!-- Wrestler List -->
+            <div class="bg-gray-50 p-6 rounded-lg mb-8 shadow-sm">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Roster</h2>
+                <ul id="wrestler-list" class="space-y-4">
+                </ul>
+            </div>
+        </div>
+
+        <div id="tab-content-matches" class="tab-content hidden">
+            <!-- Save a game manually -->
+            <div class="bg-gray-50 p-6 rounded-lg mb-8 shadow-sm">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Save a game manually</h2>
+                <p class="text-gray-600 mb-4">Select the wrestlers who participated in the match to save the result.</p>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <select id="winner-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+                        <select id="loser-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+                    </div>
+                    <input type="text" id="match-type-input" placeholder="Match type (ex: Hell in a Cell)" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select id="title-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+                    <button id="record-match-btn" class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors duration-300">
+                        Save a match
+                    </button>
+                </div>
+            </div>
+            
+            
+            <!-- Generate match card -->
+            <div class="bg-gray-50 p-6 rounded-lg mb-8 shadow-sm">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Generate match card</h2>
+                <p class="text-gray-600 mb-4">Create a complete match card for a show.</p>
+                <button id="generate-card-btn" class="w-full bg-yellow-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-yellow-600 transition-colors duration-300">
+                    Generate
+                </button>
+                <div id="generated-card-container" class="mt-4 p-4 rounded-lg bg-gray-100 hidden">
+                    <h3 class="text-lg font-bold text-center text-gray-800 mb-2">Match card</h3>
+                    <ul id="generated-card-list" class="space-y-2 mb-4"></ul>
+                    <button id="record-card-btn" class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors duration-300">
+                        Simulate
+                    </button>
+                </div>
+            </div>
+
+            <!-- Match history -->
+            <div class="bg-gray-50 p-6 rounded-lg mb-8 shadow-sm">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Match history</h2>
+                <ul id="match-history-list" class="space-y-4">
+                </ul>
+            </div>
+        </div>
+
+        <div id="tab-content-tournoi" class="tab-content hidden">
+            <!-- Generate a Tournament -->
+            <div class="bg-gray-50 p-6 rounded-lg mb-8 shadow-sm">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Generate a Tournament</h2>
+                <p class="text-gray-600 mb-4">Create and simulate a tournament.</p>
+                <div class="space-y-4">
+                    <select id="tournament-size" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="4">4 participants</option>
+                        <option value="8">8 participants</option>
+                        <option value="16">16 participants</option>
+                        <option value="32">32 participants</option>
+                        <option value="64">64 participants</option>
+                    </select>
+                    <select id="tournament-type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="elimination">Single elimination</option>
+                        <option value="round-robin">Round-Robin</option>
+                    </select>
+                    <select id="tournament-title" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Tournament</option>
+                    </select>
+                    <button id="generate-tournament-btn" class="w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors duration-300">
+                        Generate a Tournament
+                    </button>
+                    <div id="tournament-container" class="mt-4 p-4 rounded-lg bg-gray-100 hidden animate-bounce-in">
+                        <h3 class="text-xl font-bold text-center text-gray-800 mb-4">Tournament</h3>
+                        <div id="tournament-bracket" class="flex justify-center items-start"></div>
+                        <ul id="round-robin-matches" class="space-y-2 hidden"></ul>
+                        <div id="round-robin-ranking-container" class="hidden mt-4">
+                            <h4 class="text-lg font-bold text-center mb-2">Ranking</h4>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full bg-white rounded-lg shadow-md">
+                                    <thead>
+                                        <tr class="w-full border-b">
+                                            <th class="py-2 px-4 text-left font-bold text-gray-700">Rank</th>
+                                            <th class="py-2 px-4 text-left font-bold text-gray-700">Wrestler</th>
+                                            <th class="py-2 px-4 text-left font-bold text-gray-700">Wins</th>
+                                            <th class="py-2 px-4 text-left font-bold text-gray-700">Losses</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="round-robin-ranking-body">
+                                    </tbody>
+                                </table>
+                            </div>
+                            <button id="export-ranking-btn" class="w-full bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors duration-300 mt-4">
+                                Export ranking
+                            </button>
+                        </div>
+
+                        <div class="flex space-x-2 mt-4">
+                            <button id="simulate-tournament-btn" class="flex-1 bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors duration-300">
+                                Simulate tournament
+                            </button>
+                            <button id="next-round-btn" class="flex-1 bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors duration-300 hidden">
+                                Next round
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-content-titres" class="tab-content hidden">
+            <!-- Manage championships -->
+            <div class="bg-gray-50 p-6 rounded-lg mb-8 shadow-sm">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Manage championships</h2>
+                <div class="space-y-4 mb-4">
+                    <input type="text" id="title-name-input" placeholder="Title name(ex: WWE Title)" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button id="add-title-btn" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-300">
+                        Add title
+                    </button>
+                </div>
+                <ul id="title-list" class="space-y-4">
+                </ul>
+            </div>
+        </div>
+
+        <div id="tab-content-classement" class="tab-content hidden">
+            <!-- Power Ranking -->
+            <div class="bg-gray-50 p-6 rounded-lg mb-8 shadow-sm">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Power Ranking</h2>
+                <button id="save-ranking-btn" class="w-full bg-gray-400 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-500 transition-colors duration-300 mb-4">
+                    Save ranking
+                </button>
+                <ul id="power-ranking-list" class="space-y-4">
+                </ul>
+            </div>
+        </div>
+
+        <div id="tab-content-outils" class="tab-content hidden">
+            <!-- Tools -->
+            <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">(Reload if import fails)</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button id="export-data-btn" class="w-full bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors duration-300">
+                        Export data
+                    </button>
+                    <button id="import-data-btn" class="w-full bg-teal-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-700 transition-colors duration-300">
+                        Import data
+                    </button>
+                </div>
+                <input type="file" id="file-input" class="hidden" accept=".json">
+                <button id="reset-data-btn" class="w-full bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-300 mt-4">
+                    Reset data
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="message-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative">
+            <h3 id="modal-title" class="text-xl font-bold mb-2"></h3>
+            <p id="modal-message"></p>
+            <div id="modal-actions" class="mt-4 flex justify-end space-x-2"></div>
+        </div>
+    </div>
+
+    <script>
+        const nameInput = document.getElementById('wrestler-name');
+        const divisionInput = document.getElementById('wrestler-division');
+        const notesTextarea = document.getElementById('wrestler-notes');
+        const addWrestlerBtn = document.getElementById('add-wrestler-btn');
+        const wrestlerList = document.getElementById('wrestler-list');
+        const winnerSelect = document.getElementById('winner-select');
+        const loserSelect = document.getElementById('loser-select');
+        const matchTypeInput = document.getElementById('match-type-input');
+        const titleSelect = document.getElementById('title-select');
+        const recordMatchBtn = document.getElementById('record-match-btn');
+        const matchHistoryList = document.getElementById('match-history-list');
+        const objectivesList = document.getElementById('objectives-list');
+        const generateCardBtn = document.getElementById('generate-card-btn');
+        const generatedCardContainer = document.getElementById('generated-card-container');
+        const generatedCardList = document.getElementById('generated-card-list');
+        const recordCardBtn = document.getElementById('record-card-btn');
+        const titleNameInput = document.getElementById('title-name-input');
+        const addTitleBtn = document.getElementById('add-title-btn');
+        const titleList = document.getElementById('title-list');
+        const powerRankingList = document.getElementById('power-ranking-list');
+        const resetDataBtn = document.getElementById('reset-data-btn');
+        const saveRankingBtn = document.getElementById('save-ranking-btn');
+        const exportDataBtn = document.getElementById('export-data-btn');
+        const importDataBtn = document.getElementById('import-data-btn');
+        const fileInput = document.getElementById('file-input');
+
+        // Variables for tournaments
+        const tournamentSizeSelect = document.getElementById('tournament-size');
+        const tournamentTypeSelect = document.getElementById('tournament-type');
+        const tournamentTitleSelect = document.getElementById('tournament-title');
+        const generateTournamentBtn = document.getElementById('generate-tournament-btn');
+        const tournamentContainer = document.getElementById('tournament-container');
+        const tournamentBracket = document.getElementById('tournament-bracket');
+        const roundRobinMatchesList = document.getElementById('round-robin-matches');
+        const simulateTournamentBtn = document.getElementById('simulate-tournament-btn');
+        const nextRoundBtn = document.getElementById('next-round-btn');
+        const roundRobinRankingContainer = document.getElementById('round-robin-ranking-container');
+        const roundRobinRankingBody = document.getElementById('round-robin-ranking-body');
+        const exportRankingBtn = document.getElementById('export-ranking-btn');
+        
+        const messageModal = document.getElementById('message-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const modalActions = document.getElementById('modal-actions');
+        
+        let generatedCardMatches = [];
+        let tournamentData = null;
+
+        // Function to manage tabs
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            document.getElementById(`tab-content-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            
+            if (tabId === 'roster') renderWrestlers();
+            if (tabId === 'matches') renderMatchHistory();
+            if (tabId === 'classement') renderPowerRanking();
+            if (tabId === 'titres') renderTitles();
+            if (tabId === 'accueil') renderObjectives();
+            if (tabId === 'tournoi' && tournamentData) {
+                renderTournamentView();
+            }
+        }
+
+        document.getElementById('tab-accueil').addEventListener('click', () => showTab('accueil'));
+        document.getElementById('tab-roster').addEventListener('click', () => showTab('roster'));
+        document.getElementById('tab-matches').addEventListener('click', () => showTab('matches'));
+        document.getElementById('tab-tournoi').addEventListener('click', () => showTab('tournoi'));
+        document.getElementById('tab-titres').addEventListener('click', () => showTab('titres'));
+        document.getElementById('tab-classement').addEventListener('click', () => showTab('classement'));
+        document.getElementById('tab-outils').addEventListener('click', () => showTab('outils'));
+
+        // Function to save data in localStorage
+        function saveData(key, data) {
+            localStorage.setItem(key, JSON.stringify(data));
+        }
+
+        // Function to load data in localStorage
+        function loadData(key) {
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : [];
+        }
+        
+        // Function to reset all data
+        function resetAllData() {
+            localStorage.removeItem('wrestlers');
+            localStorage.removeItem('matches');
+            localStorage.removeItem('titles');
+            tournamentData = null;
+            renderAll();
+            showMessage('Data cleared!');
+        }
+        
+        // Function to display a message box
+        function showMessage(title, message, isConfirm = false, onConfirm = null) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            modalActions.innerHTML = '';
+            
+            const okBtn = document.createElement('button');
+            okBtn.textContent = 'OK';
+            okBtn.className = 'px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700';
+            okBtn.onclick = () => {
+                messageModal.classList.add('hidden');
+                if (isConfirm && onConfirm) {
+                    onConfirm();
+                }
+            };
+            modalActions.appendChild(okBtn);
+
+            if (isConfirm) {
+                const cancelBtn = document.createElement('button');
+                cancelBtn.textContent = 'Cancel';
+                cancelBtn.className = 'px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400';
+                cancelBtn.onclick = () => messageModal.classList.add('hidden');
+                modalActions.prepend(cancelBtn);
+            }
+
+            messageModal.classList.remove('hidden');
+        }
+
+        function recordMatch(winnerName, loserName, matchType = 'Standard', title = null) {
+            const wrestlers = loadData('wrestlers');
+            const titles = loadData('titles');
+            const winner = wrestlers.find(w => w.name === winnerName);
+            const loser = wrestlers.find(w => w.name === loserName);
+
+            if (winner && loser) {
+                // Update statistics
+                winner.wins++;
+                winner.currentStreak++;
+                if (winner.currentStreak > winner.longestStreak) {
+                    winner.longestStreak = winner.currentStreak;
+                }
+                winner.rating = (winner.rating || 1500) + 15;
+                
+                loser.losses++;
+                loser.currentStreak = 0;
+                loser.rating = (loser.rating || 1500) - 15;
+
+                // Manage title change
+                let titleChange = false;
+                if (title) {
+                    const matchedTitle = titles.find(t => t.name === title);
+                    if (matchedTitle) {
+                        if (matchedTitle.champion === loserName) {
+                            matchedTitle.champion = winnerName;
+                            matchedTitle.defenses = 0;
+                            titleChange = true;
+                        } 
+                        else if (matchedTitle.champion === null) {
+                            matchedTitle.champion = winnerName;
+                            matchedTitle.defenses = 0;
+                            titleChange = true;
+                        } 
+                        else if (matchedTitle.champion === winnerName) {
+                            matchedTitle.defenses = (matchedTitle.defenses || 0) + 1;
+                        }
+                    }
+                }
+                
+                saveData('wrestlers', wrestlers);
+                saveData('titles', titles);
+                
+                const matches = loadData('matches');
+                matches.unshift({ winner: winnerName, loser: loserName, date: new Date(), type: matchType, title: title, titleChange: titleChange });
+                saveData('matches', matches);
+
+                renderAll();
+            }
+        }
+
+        // Function to display all interface elements
+        function renderAll() {
+            renderWrestlers();
+            renderMatchHistory();
+            renderObjectives();
+            renderTitles();
+            renderPowerRanking();
+        }
+
+        // Function to display wrestlers
+        function renderWrestlers() {
+            const wrestlers = loadData('wrestlers');
+            wrestlerList.innerHTML = '';
+            winnerSelect.innerHTML = '';
+            loserSelect.innerHTML = '';
+            wrestlers.forEach((wrestler, index) => {
+                const li = document.createElement('li');
+                li.className = 'bg-white p-4 rounded-lg shadow-md flex justify-between items-center';
+                li.innerHTML = `
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">${wrestler.name}</h3>
+                        <p class="text-gray-600">Division: ${wrestler.division}</p>
+                        <p class="text-gray-500 text-sm mt-1">Notes: ${wrestler.notes}</p>
+                        <p class="text-gray-700 mt-2 text-sm font-semibold">Stats: ${wrestler.wins} wins - ${wrestler.losses} losses | Cote: ${wrestler.rating}</p>
+                        <p class="text-gray-700 mt-1 text-sm font-semibold">Current streak ${wrestler.currentStreak} - Longest streak: ${wrestler.longestStreak}</p>
+                    </div>
+                    <button class="remove-btn bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition-colors duration-300" data-index="${index}">
+                        Supprimer
+                    </button>
+                `;
+                wrestlerList.appendChild(li);
+
+                // Populate the select dropdowns
+                const winnerOption = document.createElement('option');
+                winnerOption.value = wrestler.name;
+                winnerOption.textContent = wrestler.name;
+                winnerSelect.appendChild(winnerOption);
+
+                const loserOption = document.createElement('option');
+                loserOption.value = wrestler.name;
+                loserOption.textContent = wrestler.name;
+                loserSelect.appendChild(loserOption);
+            });
+        }
+
+        // Function to display match history
+        function renderMatchHistory() {
+            const matches = loadData('matches');
+            matchHistoryList.innerHTML = '';
+            matches.forEach(match => {
+                const li = document.createElement('li');
+                li.className = 'bg-white p-4 rounded-lg shadow-md';
+                const matchType = match.type ? `(${match.type})` : '';
+                const titleText = match.title ? ` For the ${match.title}` : '';
+                li.innerHTML = `
+                    <p class="text-gray-700">Le <span class="font-semibold">${new Date(match.date).toLocaleDateString()}</span> :</p>
+                    <p class="text-gray-700 font-bold">${match.winner} <span class="text-green-600">beats</span> ${match.loser} ${matchType}${titleText}</p>
+                `;
+                matchHistoryList.appendChild(li);
+            });
+        }
+
+        // Function to display titles history
+        function renderTitles() {
+            const titles = loadData('titles');
+            titleList.innerHTML = '';
+            titleSelect.innerHTML = '<option value="">(No title)</option>';
+            tournamentTitleSelect.innerHTML = '<option value="">Tournament</option>';
+            titles.forEach((title, index) => {
+                const li = document.createElement('li');
+                li.className = 'bg-white p-4 rounded-lg shadow-md flex justify-between items-center';
+                li.innerHTML = `
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">${title.name}</h3>
+                        <p class="text-gray-600">Champion: <span class="font-semibold">${title.champion || 'Vacant'}</span></p>
+                        <p class="text-gray-500 text-sm mt-1">Title defenses: ${title.defenses || 0}</p>
+                    </div>
+                    <button class="remove-title-btn bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition-colors duration-300" data-index="${index}">
+                        Delete
+                    </button>
+                `;
+                titleList.appendChild(li);
+
+                const option = document.createElement('option');
+                option.value = title.name;
+                option.textContent = title.name;
+                titleSelect.appendChild(option);
+                
+                // If there is a vacant title to win
+                if (!title.champion) {
+                    const tournamentOption = document.createElement('option');
+                    tournamentOption.value = title.name;
+                    tournamentOption.textContent = `To win the : ${title.name} (Vacant)`;
+                    tournamentTitleSelect.appendChild(tournamentOption);
+                }
+            });
+        }
+        
+        // Function to check and display objectives
+        function renderObjectives() {
+            const wrestlers = loadData('wrestlers');
+            const titles = loadData('titles');
+            const matches = loadData('matches');
+            objectivesList.innerHTML = '';
+            
+            // Define a simple list of objectives
+            const objectives = [
+                { id: 'winStreak5', description: 'Win 5 matches in a row', check: (w) => w.longestStreak >= 5 },
+                { id: 'win10', description: 'Win 10 matches', check: (w) => w.wins >= 10 },
+                { id: 'winStreak10', description: 'Win 10 matches in a row', check: (w) => w.longestStreak >= 10 },
+                { id: 'winStreak20', description: 'Win 20 matches in a row', check: (w) => w.longestStreak >= 20 },
+                { id: 'win20', description: 'Win 20 matches', check: (w) => w.wins >= 20 },
+                { id: 'win50', description: 'Win 50 matches', check: (w) => w.wins >= 50 },
+                { id: 'winTitle', description: 'Win a championship', check: (w) => titles.some(t => t.champion === w.name) },
+                { id: 'defendTitle3', description: 'Win 3 title defenses', check: (w) => titles.some(t => t.champion === w.name && t.defenses >= 3) },
+                { id: 'defendTitle10', description: 'Win 10 title defenses', check: (w) => titles.some(t => t.champion === w.name && t.defenses >= 10) },
+                { id: 'winHellInACell', description: 'Win a Hell in a Cell match', check: (w) => matches.some(m => m.winner === w.name && m.type && m.type.toLowerCase().includes('hell in a cell')) },
+                { id: 'winCage', description: 'Win a cage match', check: (w) => matches.some(m => m.winner === w.name && m.type && m.type.toLowerCase().includes('cage')) },
+                { id: 'winHardcore', description: 'Win a Hardcore match', check: (w) => matches.some(m => m.winner === w.name && m.type && m.type.toLowerCase().includes('hardcore')) },              
+                { id: 'winTLC', description: 'Win a TLC match', check: (w) => matches.some(m => m.winner === w.name && m.type && m.type.toLowerCase().includes('tlc')) },
+                { id: 'winHair', description: 'Win a hair vs hair match', check: (w) => matches.some(m => m.winner === w.name && m.type && m.type.toLowerCase().includes('hair vs hair')) }                
+            ];
+            
+            wrestlers.forEach(wrestler => {
+                objectives.forEach(objective => {
+                    const isCompleted = objective.check(wrestler);
+                    if (isCompleted) {
+                        const li = document.createElement('li');
+                        li.className = 'bg-green-100 p-4 rounded-lg shadow-md flex items-center justify-between';
+                        li.innerHTML = `
+                            <p class="text-green-700 font-bold">🎉 Goal achieved  !</p>
+                            <p class="text-green-700">${wrestler.name} has completed the objective : "${objective.description}"</p>
+                        `;
+                        objectivesList.appendChild(li);
+                    }
+                });
+            });
+            
+            if (objectivesList.children.length === 0) {
+                objectivesList.innerHTML = '<p class="text-gray-500">No goals have been achieved yet. Keep making matches !</p>';
+            }
+        }
+        
+        // Function to display power ranking
+        function renderPowerRanking() {
+            const wrestlers = loadData('wrestlers');
+            // Sort wrestlers by performance rating, in descending order
+            const rankedWrestlers = [...wrestlers].sort((a, b) => b.rating - a.rating);
+            powerRankingList.innerHTML = '';
+            if (rankedWrestlers.length === 0) {
+                powerRankingList.innerHTML = '<p class="text-gray-500">Add wrestlers to see the rankings.</p>';
+            }
+            rankedWrestlers.forEach((wrestler, index) => {
+                const li = document.createElement('li');
+                li.className = 'bg-white p-4 rounded-lg shadow-md flex items-center space-x-4';
+                li.innerHTML = `
+                    <span class="text-2xl font-bold text-blue-600">${index + 1}.</span>
+                    <div>
+                        <p class="text-xl font-semibold">${wrestler.name}</p>
+                        <p class="text-gray-600 text-sm">Cote: ${wrestler.rating}</p>
+                    </div>
+                `;
+                powerRankingList.appendChild(li);
+            });
+        }
+
+
+        // Gestionnaire d'événement pour le bouton "Ajouter un catcheur"
+        addWrestlerBtn.addEventListener('click', () => {
+            const name = nameInput.value.trim();
+            const division = divisionInput.value.trim();
+            const notes = notesTextarea.value.trim();
+
+            if (name) {
+                const wrestlers = loadData('wrestlers');
+                wrestlers.push({ name, division, notes, wins: 0, losses: 0, currentStreak: 0, longestStreak: 0, rating: 1500 });
+                saveData('wrestlers', wrestlers);
+                renderAll();
+                nameInput.value = '';
+                divisionInput.value = '';
+                notesTextarea.value = '';
+            }
+        });
+
+        // Gestionnaire d'événement pour le bouton "Enregistrer un match"
+        recordMatchBtn.addEventListener('click', () => {
+            const winnerName = winnerSelect.value;
+            const loserName = loserSelect.value;
+            const matchType = matchTypeInput.value.trim();
+            const titleInPlay = titleSelect.value;
+            
+            if (winnerName && loserName && winnerName !== loserName) {
+                recordMatch(winnerName, loserName, matchType, titleInPlay);
+            } else {
+                 showMessage('Error', 'Please select two different wrestlers.');
+            }
+        });
+      
+        generateCardBtn.addEventListener('click', () => {
+            const wrestlers = loadData('wrestlers');
+            if (wrestlers.length < 4) {
+                showMessage('Attention', 'Please have at least four different wrestlers to generate a card.');
+                return;
+            }
+
+            generatedCardMatches = [];
+            const remainingWrestlers = [...wrestlers].sort(() => 0.5 - Math.random());
+            const cardSize = Math.floor(Math.random() * 3) + 5;
+
+            for (let i = 0; i < cardSize; i++) {
+                if (remainingWrestlers.length < 2) {
+                    break;
+                }
+                const index1 = Math.floor(Math.random() * remainingWrestlers.length);
+                const wrestler1 = remainingWrestlers.splice(index1, 1)[0];
+                
+                const index2 = Math.floor(Math.random() * remainingWrestlers.length);
+                const wrestler2 = remainingWrestlers.splice(index2, 1)[0];
+                
+                generatedCardMatches.push({
+                    wrestler1: wrestler1.name,
+                    wrestler2: wrestler2.name,
+                    matchType: 'Standard'
+                });
+            }
+
+            generatedCardList.innerHTML = '';
+            generatedCardMatches.forEach(match => {
+                const li = document.createElement('li');
+                li.className = 'text-gray-700 text-center';
+                li.textContent = `${match.wrestler1} vs ${match.wrestler2}`;
+                generatedCardList.appendChild(li);
+            });
+            
+            generatedCardContainer.classList.remove('hidden');
+        });
+
+        // Gestionnaire d'événement pour le bouton "Enregistrer les résultats"
+        recordCardBtn.addEventListener('click', () => {
+            if (generatedCardMatches.length === 0) {
+                showMessage('Aucune carte', 'Aucune carte de matchs n\'a été générée pour être enregistrée.');
+                return;
+            }
+
+            generatedCardMatches.forEach(match => {
+                const winnerName = Math.random() > 0.5 ? match.wrestler1 : match.wrestler2;
+                const loserName = winnerName === match.wrestler1 ? match.wrestler2 : match.wrestler1;
+                recordMatch(winnerName, loserName, match.matchType);
+            });
+            
+            generatedCardMatches = [];
+            generatedCardContainer.classList.add('hidden');
+            
+            showMessage('The match card results have been saved !');
+        });
+
+        // Event handler for the “Add title” button
+        addTitleBtn.addEventListener('click', () => {
+            const titleName = titleNameInput.value.trim();
+            if (titleName) {
+                const titles = loadData('titles');
+                titles.push({ name: titleName, champion: null, defenses: 0 });
+                saveData('titles', titles);
+                renderAll();
+                titleNameInput.value = '';
+            }
+        });
+
+        // Event handler to delete a wrestler
+        wrestlerList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-btn')) {
+                const index = e.target.getAttribute('data-index');
+                const wrestlers = loadData('wrestlers');
+                wrestlers.splice(index, 1);
+                saveData('wrestlers', wrestlers);
+                renderAll();
+            }
+        });
+
+        // Event handler to remove a title(championship)
+        titleList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-title-btn')) {
+                const index = e.target.getAttribute('data-index');
+                const titles = loadData('titles');
+                titles.splice(index, 1);
+                saveData('titles', titles);
+                renderAll();
+            }
+        });
+        
+        // Event handler to reset data
+        resetDataBtn.addEventListener('click', () => {
+            showMessage(
+                'Are you sure you want to reset all data? This action cannot be undone.',
+                'Export data before doing this.',
+                true,
+                resetAllData
+            );
+        });
+        
+        // Event handler to save ranking
+        saveRankingBtn.addEventListener('click', () => {
+            const rankingItems = Array.from(powerRankingList.children);
+            if (rankingItems.length === 0 || rankingItems[0].textContent.includes('Add wrestlers')) {
+                showMessage('There are no rankings to save. Add wrestlers and record matches to create one.');
+                return;
+            }
+            
+            const rankingText = rankingItems.map(item => item.textContent.trim()).join('\n');
+            
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = rankingText;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showMessage('Saved!', 'The ranking has been copied to your clipboard.');
+            } catch (err) {
+                showMessage('Error', 'Unable to copy the text.');
+            }
+            
+            document.body.removeChild(tempTextArea);
+        });
+
+        // Event handler to export data
+        exportDataBtn.addEventListener('click', () => {
+            const dataToExport = {
+                wrestlers: loadData('wrestlers'),
+                matches: loadData('matches'),
+                titles: loadData('titles')
+            };
+            const jsonString = JSON.stringify(dataToExport, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'fantasy_roster.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showMessage('Export complete', 'The roster file has been downloaded.');
+        });
+
+        // Event handler to import data
+        importDataBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (importedData.wrestlers && importedData.matches && importedData.titles) {
+                        showMessage(
+                            'Confirm import',
+                            'Are you sure you want to replace the current data with the data in the file? This action cannot be undone.',
+                            true,
+                            () => {
+                                saveData('wrestlers', importedData.wrestlers);
+                                saveData('matches', importedData.matches);
+                                saveData('titles', importedData.titles);
+                                renderAll();
+                                showMessage('Import complete', 'The roster data has been successfully imported!');
+                            }
+                        );
+                    } else {
+                        showMessage('Error', 'The file is not in the expected roster format.');
+                    }
+                } catch (error) {
+                    showMessage('File error', 'An error occurred while reading the file. Please ensure that the file is valid JSON.');
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // --- FUNCTIONS FOR TOURNAMENTS ---
+
+        function renderTournamentView() {
+            if (!tournamentData) {
+                tournamentBracket.innerHTML = '';
+                roundRobinMatchesList.innerHTML = '';
+                roundRobinRankingContainer.classList.add('hidden');
+                tournamentContainer.classList.add('hidden');
+                return;
+            }
+
+            tournamentContainer.classList.remove('hidden');
+
+            if (tournamentData.type === 'elimination') {
+                renderEliminationBracket();
+            } else if (tournamentData.type === 'round-robin') {
+                renderRoundRobinMatches();
+                renderRoundRobinRanking();
+            }
+        }
+
+        function generateTournament() {
+            const type = tournamentTypeSelect.value;
+            const size = parseInt(tournamentSizeSelect.value);
+            const title = tournamentTitleSelect.value;
+            const wrestlers = loadData('wrestlers');
+            const availableWrestlers = [...wrestlers].sort(() => 0.5 - Math.random());
+            
+            if (availableWrestlers.length < size) {
+                showMessage('Error', `You need at least ${size} wrestlers to generate a tournament.`);
+                return;
+            }
+
+            const participants = availableWrestlers.slice(0, size);
+            
+            tournamentData = {
+                type: type,
+                title: title,
+                size: size,
+                participants: participants.map(w => w.name),
+                finalWinner: null
+            };
+
+            if (type === 'elimination') {
+                tournamentData.currentRound = 1;
+                tournamentData.rounds = [];
+                let currentRoundMatches = [];
+                for (let i = 0; i < participants.length; i += 2) {
+                    currentRoundMatches.push({ p1: participants[i].name, p2: participants[i+1].name, winner: null });
+                }
+                tournamentData.rounds.push(currentRoundMatches);
+                simulateTournamentBtn.classList.remove('hidden');
+                nextRoundBtn.classList.add('hidden');
+            } else if (type === 'round-robin') {
+                tournamentData.matches = [];
+                for (let i = 0; i < participants.length; i++) {
+                    for (let j = i + 1; j < participants.length; j++) {
+                        tournamentData.matches.push({
+                            p1: participants[i].name,
+                            p2: participants[j].name,
+                            winner: null,
+                            played: false
+                        });
+                    }
+                }
+                simulateTournamentBtn.classList.remove('hidden');
+                nextRoundBtn.classList.add('hidden');
+            }
+
+            renderTournamentView();
+        }
+
+        function renderEliminationBracket() {
+            tournamentBracket.classList.remove('hidden');
+            roundRobinMatchesList.classList.add('hidden');
+            roundRobinRankingContainer.classList.add('hidden');
+            tournamentBracket.innerHTML = '';
+            const rounds = tournamentData.rounds;
+
+            rounds.forEach((round, roundIndex) => {
+                const roundDiv = document.createElement('div');
+                roundDiv.className = 'flex flex-col items-center space-y-4 mx-4';
+                
+                const roundTitle = document.createElement('h4');
+                roundTitle.className = 'font-bold text-lg text-gray-700';
+                roundTitle.textContent = `Tour ${roundIndex + 1}`;
+                roundDiv.appendChild(roundTitle);
+
+                round.forEach((match, matchIndex) => {
+                    const matchDiv = document.createElement('div');
+                    matchDiv.className = `p-2 rounded-lg shadow-md w-48 text-center border-2 ${match.winner ? 'border-green-500 bg-white' : 'border-gray-300 bg-gray-50'}`;
+                    
+                    const p1Div = document.createElement('p');
+                    p1Div.className = `wrestler-choice font-semibold px-2 py-1 rounded-md transition-colors duration-200 ${match.winner === match.p1 ? 'winner' : match.winner ? 'loser' : ''}`;
+                    p1Div.textContent = match.p1;
+                    if (!match.winner) {
+                        p1Div.onclick = () => selectEliminationWinner(roundIndex, matchIndex, match.p1);
+                    }
+                    
+                    const p2Div = document.createElement('p');
+                    p2Div.className = `wrestler-choice font-semibold px-2 py-1 rounded-md transition-colors duration-200 ${match.winner === match.p2 ? 'winner' : match.winner ? 'loser' : ''}`;
+                    p2Div.textContent = match.p2;
+                    if (!match.winner) {
+                        p2Div.onclick = () => selectEliminationWinner(roundIndex, matchIndex, match.p2);
+                    }
+
+                    const vsDiv = document.createElement('p');
+                    vsDiv.className = 'text-xs text-gray-500';
+                    vsDiv.textContent = 'vs';
+
+                    matchDiv.appendChild(p1Div);
+                    matchDiv.appendChild(vsDiv);
+                    matchDiv.appendChild(p2Div);
+
+                    roundDiv.appendChild(matchDiv);
+                });
+                tournamentBracket.appendChild(roundDiv);
+            });
+            
+            if (tournamentData.finalWinner) {
+                const winnerDiv = document.createElement('div');
+                winnerDiv.className = 'flex flex-col items-center mx-4';
+                winnerDiv.innerHTML = `
+                    <h4 class="font-bold text-lg text-gray-700">Vainqueur</h4>
+                    <div class="p-4 rounded-lg shadow-lg w-48 text-center bg-green-500 text-white">
+                        <p class="font-bold text-xl">${tournamentData.finalWinner}</p>
+                    </div>
+                `;
+                tournamentBracket.appendChild(winnerDiv);
+            }
+            
+            const currentRoundMatches = tournamentData.rounds[tournamentData.currentRound - 1];
+            const allMatchesCompleted = currentRoundMatches.every(match => match.winner !== null);
+            if (allMatchesCompleted && !tournamentData.finalWinner) {
+                nextRoundBtn.classList.remove('hidden');
+            } else {
+                nextRoundBtn.classList.add('hidden');
+            }
+            
+            if (tournamentData.finalWinner) {
+                simulateTournamentBtn.classList.add('hidden');
+            }
+        }
+        
+        // Manage manual selection of a winner in elimination rounds
+        function selectEliminationWinner(roundIndex, matchIndex, winnerName) {
+            const match = tournamentData.rounds[roundIndex][matchIndex];
+            if (match.winner) {
+                return;
+            }
+            const loserName = match.p1 === winnerName ? match.p2 : match.p1;
+            match.winner = winnerName;
+            recordMatch(winnerName, loserName, 'Tournament');
+            renderEliminationBracket();
+        }
+
+        // Function to proceed to the next round.
+        function nextEliminationRound() {
+            const currentRoundIndex = tournamentData.currentRound - 1;
+            const currentRoundMatches = tournamentData.rounds[currentRoundIndex];
+            const nextRoundMatches = [];
+            const winners = currentRoundMatches.map(match => match.winner);
+
+            if (winners.length === 1 && winners[0] !== null) {
+                tournamentData.finalWinner = winners[0];
+                if (tournamentData.title) {
+                    const titles = loadData('titles');
+                    const championTitle = titles.find(t => t.name === tournamentData.title);
+                    if (championTitle) {
+                        championTitle.champion = tournamentData.finalWinner;
+                        championTitle.defenses = 0;
+                        saveData('titles', titles);
+                    }
+                }
+                showMessage('Tournament is over!', `Winner is ${tournamentData.finalWinner} !`);
+            } else {
+                for (let i = 0; i < winners.length; i += 2) {
+                    if (winners[i] && winners[i+1]) {
+                        nextRoundMatches.push({
+                            p1: winners[i],
+                            p2: winners[i+1],
+                            winner: null
+                        });
+                    } else {
+                        showMessage('Attention', 'Please designate a winner for all matches before moving on to the next round.');
+                        return;
+                    }
+                }
+                tournamentData.currentRound++;
+                tournamentData.rounds.push(nextRoundMatches);
+                showMessage('Round completed', 'A new round has been generated.');
+            }
+            renderEliminationBracket();
+        }
+
+
+        // Function to simulate a single-elimination tournament
+        function simulateEliminationTournament() {
+            if (!tournamentData) {
+                showMessage('Erreur', 'Veuillez d\'abord générer un tournoi.');
+                return;
+            }
+            
+            while (!tournamentData.finalWinner) {
+                const currentRoundIndex = tournamentData.currentRound - 1;
+                let currentRoundMatches = tournamentData.rounds[currentRoundIndex];
+                
+                currentRoundMatches.forEach(match => {
+                    if (!match.winner) {
+                        const winnerName = Math.random() > 0.5 ? match.p1 : match.p2;
+                        const loserName = winnerName === match.p1 ? match.p2 : match.p1;
+                        recordMatch(winnerName, loserName, 'Tournament');
+                        match.winner = winnerName;
+                    }
+                });
+
+                const winners = currentRoundMatches.map(match => match.winner);
+                if (winners.length === 1) {
+                    tournamentData.finalWinner = winners[0];
+                    if (tournamentData.title) {
+                        const titles = loadData('titles');
+                        const championTitle = titles.find(t => t.name === tournamentData.title);
+                        if (championTitle) {
+                            championTitle.champion = tournamentData.finalWinner;
+                            championTitle.defenses = 0;
+                            saveData('titles', titles);
+                        }
+                    }
+                    break;
+                }
+
+                const nextRoundMatches = [];
+                for (let i = 0; i < winners.length; i += 2) {
+                    nextRoundMatches.push({
+                        p1: winners[i],
+                        p2: winners[i+1],
+                        winner: null
+                    });
+                }
+                tournamentData.currentRound++;
+                tournamentData.rounds.push(nextRoundMatches);
+            }
+            
+            renderEliminationBracket();
+            showMessage('Tournament is over', `Winner is ${tournamentData.finalWinner} !`);
+        }
+        
+        function renderRoundRobinMatches() {
+            tournamentBracket.classList.add('hidden');
+            roundRobinMatchesList.classList.remove('hidden');
+            roundRobinRankingContainer.classList.remove('hidden');
+            roundRobinMatchesList.innerHTML = '';
+            
+            const allMatches = tournamentData.matches;
+
+            allMatches.forEach((match, index) => {
+                const li = document.createElement('li');
+                li.className = `bg-white p-4 rounded-lg shadow-md flex justify-between items-center transition-colors duration-200`;
+                
+                const matchInfoDiv = document.createElement('div');
+                matchInfoDiv.className = 'flex flex-col space-y-1';
+                
+                const p1Div = document.createElement('div');
+                p1Div.className = `wrestler-choice font-semibold text-gray-700 px-2 py-1 rounded-md transition-colors duration-200 ${match.winner === match.p1 ? 'winner' : match.winner ? 'loser' : ''}`;
+                p1Div.textContent = match.p1;
+                if (!match.played) {
+                    p1Div.onclick = () => selectRoundRobinWinner(index, match.p1);
+                }
+
+                const p2Div = document.createElement('div');
+                p2Div.className = `wrestler-choice font-semibold text-gray-700 px-2 py-1 rounded-md transition-colors duration-200 ${match.winner === match.p2 ? 'winner' : match.winner ? 'loser' : ''}`;
+                p2Div.textContent = match.p2;
+                if (!match.played) {
+                    p2Div.onclick = () => selectRoundRobinWinner(index, match.p2);
+                }
+
+                const vsDiv = document.createElement('p');
+                vsDiv.className = 'text-xs text-gray-500 text-center';
+                vsDiv.textContent = 'vs';
+
+                matchInfoDiv.appendChild(p1Div);
+                matchInfoDiv.appendChild(vsDiv);
+                matchInfoDiv.appendChild(p2Div);
+
+                li.appendChild(matchInfoDiv);
+
+                roundRobinMatchesList.appendChild(li);
+            });
+            
+            // Hide button when every matches are done
+            if (allMatches.every(match => match.played)) {
+                simulateTournamentBtn.classList.add('hidden');
+                determineRoundRobinWinner();
+            } else {
+                simulateTournamentBtn.classList.remove('hidden');
+            }
+        }
+        
+        function selectRoundRobinWinner(matchIndex, winnerName) {
+            const match = tournamentData.matches[matchIndex];
+            if (match.played) {
+                return;
+            }
+            const loserName = match.p1 === winnerName ? match.p2 : match.p1;
+            
+            match.winner = winnerName;
+            match.played = true;
+            recordMatch(winnerName, loserName, 'Round-Robin Tournament');
+            
+            renderRoundRobinMatches();
+            renderRoundRobinRanking();
+        }
+
+        // Fonction pour simuler un seul match du tournoi toutes-rondes
+        function simulateRoundRobinMatch() {
+            const allMatches = tournamentData.matches;
+            const nextMatch = allMatches.find(m => !m.played);
+            if (nextMatch) {
+                const winnerName = Math.random() > 0.5 ? nextMatch.p1 : nextMatch.p2;
+                const loserName = winnerName === nextMatch.p1 ? nextMatch.p2 : nextMatch.p1;
+                
+                nextMatch.winner = winnerName;
+                nextMatch.played = true;
+                recordMatch(winnerName, loserName, 'Round-Robin Tournament');
+                
+                renderRoundRobinMatches();
+                renderRoundRobinRanking();
+            } else {
+                showMessage('Tournament is over!');
+                determineRoundRobinWinner();
+            }
+        }
+        
+        // Function to simulate all remaining matches in the round-robin tournament
+        function simulateAllRoundRobinMatches() {
+            tournamentData.matches.forEach(match => {
+                if (!match.played) {
+                    const winnerName = Math.random() > 0.5 ? match.p1 : match.p2;
+                    const loserName = winnerName === match.p1 ? match.p2 : match.p1;
+                    match.winner = winnerName;
+                    match.played = true;
+                    recordMatch(winnerName, loserName, 'Round-Robin Tournament');
+                }
+            });
+            renderRoundRobinMatches();
+            renderRoundRobinRanking();
+            determineRoundRobinWinner();
+        }
+
+        // Show round-robin ranking
+        function renderRoundRobinRanking() {
+            roundRobinRankingBody.innerHTML = '';
+            if (!tournamentData || tournamentData.type !== 'round-robin') {
+                return;
+            }
+
+            const participantResults = {};
+            tournamentData.participants.forEach(name => {
+                participantResults[name] = { wins: 0, losses: 0 };
+            });
+
+            tournamentData.matches.forEach(match => {
+                if (match.played) {
+                    participantResults[match.winner].wins++;
+                    participantResults[match.p1 === match.winner ? match.p2 : match.p1].losses++;
+                }
+            });
+
+            const sortedRanking = Object.entries(participantResults)
+                .map(([name, stats]) => ({ name, ...stats }))
+                .sort((a, b) => b.wins - a.wins);
+
+            sortedRanking.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'w-full border-b';
+                tr.innerHTML = `
+                    <td class="py-2 px-4">${index + 1}.</td>
+                    <td class="py-2 px-4 font-semibold">${item.name}</td>
+                    <td class="py-2 px-4 text-green-600">${item.wins}</td>
+                    <td class="py-2 px-4 text-red-600">${item.losses}</td>
+                `;
+                roundRobinRankingBody.appendChild(tr);
+            });
+        }
+
+        function determineRoundRobinWinner() {
+            const allMatchesPlayed = tournamentData.matches.every(m => m.played);
+            if (!allMatchesPlayed) {
+                return;
+            }
+            
+            const participantNames = tournamentData.participants;
+            const results = {};
+            participantNames.forEach(name => {
+                results[name] = { wins: 0, losses: 0 };
+            });
+            
+            tournamentData.matches.forEach(match => {
+                if (match.played) {
+                    results[match.winner].wins++;
+                }
+            });
+
+            let maxWins = 0;
+            let winners = [];
+            for (const name in results) {
+                if (results[name].wins > maxWins) {
+                    maxWins = results[name].wins;
+                    winners = [name];
+                } else if (results[name].wins === maxWins) {
+                    winners.push(name);
+                }
+            }
+            
+            if (winners.length === 1) {
+                tournamentData.finalWinner = winners[0];
+                if (tournamentData.title) {
+                    const titles = loadData('titles');
+                    const championTitle = titles.find(t => t.name === tournamentData.title);
+                    if (championTitle) {
+                        championTitle.champion = tournamentData.finalWinner;
+                        championTitle.defenses = 0;
+                        saveData('titles', titles);
+                    }
+                }
+                showMessage(`The winner is ${winners[0]} with ${maxWins} wins !`);
+            } else {
+                tournamentData.finalWinner = null;
+                showMessage('Draw', `There is a tie between: ${winners.join(', ')} with ${maxWins} wins each.`);
+            }
+        }
+        
+        // Exportation du classement du tournoi
+        exportRankingBtn.addEventListener('click', () => {
+            if (!tournamentData || tournamentData.type !== 'round-robin') {
+                showMessage('Error', 'No round-robin tournament rankings to export.');
+                return;
+            }
+            const rankingTable = document.getElementById('round-robin-ranking-body');
+            let rankingText = 'Rang\tCatcheur\tVictoires\tDéfaites\n';
+            Array.from(rankingTable.rows).forEach(row => {
+                const rowData = Array.from(row.cells).map(cell => cell.textContent.trim());
+                rankingText += rowData.join('\t') + '\n';
+            });
+
+            // Fallback for older browsers
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = rankingText;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showMessage('Exported!', 'The tournament standings have been copied to your clipboard.');
+            } catch (err) {
+                showMessage('Error', 'Unable to copy text.');
+            }
+            
+            document.body.removeChild(tempTextArea);
+        });
+
+        // Event handler to Generate a tournament
+        generateTournamentBtn.addEventListener('click', generateTournament);
+
+        simulateTournamentBtn.addEventListener('click', () => {
+            if (tournamentData.type === 'elimination') {
+                simulateEliminationTournament();
+            } else if (tournamentData.type === 'round-robin') {
+                simulateAllRoundRobinMatches();
+            }
+        });
+        
+        nextRoundBtn.addEventListener('click', nextEliminationRound);
+
+
+        // keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // To add a new wrestler (Ctrl + Enter)
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                if (document.activeElement === nameInput || document.activeElement === divisionInput || document.activeElement === notesTextarea) {
+                    addWrestlerBtn.click();
+                    e.preventDefault(); 
+                }
+            }
+
+            // To save a match (Alt + Enter)
+            if (e.altKey && e.key === 'Enter') {
+                if (document.activeElement === winnerSelect || document.activeElement === loserSelect || document.activeElement === matchTypeInput || document.activeElement === titleSelect) {
+                    recordMatchBtn.click();
+                    e.preventDefault(); 
+                }
+            }
+        });
+
+
+        // Load roster, history, and goals when loading the page
+        document.addEventListener('DOMContentLoaded', () => {
+            renderAll();
+            showTab('accueil');
+        });
+    </script>
+</body>
+</html>
+
