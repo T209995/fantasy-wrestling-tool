@@ -1,5 +1,6 @@
 # Outil de Fantasy Booking
-# UPDATE: English version is done! (English version of README.md is coming soon)
+# UPDATE: Try it [HERE!](https://t209995.github.io/fantasy-wrestling-tool/fantasy_booking_en.html)
+# Version française : [Ici](https://t209995.github.io/fantasy-wrestling-tool/fantasy_booking.html)
 # DISCLAIMER : Le script a été crée partiellement avec l'aide de Google Gemini 2.5 Flash
 
 Cet outil est une application web conçue pour les fans de catch qui aiment créer et gérer leurs propres scénarios. Il vous permet de garder une trace des matchs, de gérer un roster, d'organiser des tournois et de gérer les titres de championnat.
